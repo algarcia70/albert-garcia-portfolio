@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google Analytics: website traffic and meeting requests. -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-CTJX51L789"></script>
-<script src="/analytics.js"></script>
+<!-- Analytics loads only after a visitor accepts. -->
+<script defer src="/analytics.js"></script>
+<link rel="stylesheet" href="/privacy.css">
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -413,6 +413,7 @@
   <footer class="footer">
     <div class="container footer__inner">
       <p>&copy; <span id="year"></span> Albert Garcia. All rights reserved.</p>
+      <div class="privacy-links"><a href="/privacy/">Privacy</a><button class="cookie-settings" type="button" data-cookie-settings hidden>Cookie settings</button></div>
     </div>
   </footer>
 
