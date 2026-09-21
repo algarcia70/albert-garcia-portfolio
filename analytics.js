@@ -13,7 +13,7 @@
       var saved = JSON.parse(localStorage.getItem(storageKey));
       if (saved && saved.expires > Date.now() &&
           (saved.choice === 'accepted' || saved.choice === 'declined')) return saved.choice;
-    } catch (_) { /* Storage unavailable: default to no analytics. */ }
+    } catch (_) { /* Storage unavailable: no saved preference. */ }
     return null;
   }
 
@@ -36,10 +36,9 @@
     window.dataLayer = window.dataLayer || [];
     window.gtag = function () { window.dataLayer.push(arguments); };
     window.gtag('consent', 'default', {
-      analytics_storage: 'denied', ad_storage: 'denied',
+      analytics_storage: 'granted', ad_storage: 'denied',
       ad_user_data: 'denied', ad_personalization: 'denied'
     });
-    window.gtag('consent', 'update', { analytics_storage: 'granted' });
     window.gtag('js', new Date());
     window.gtag('config', measurementId, {
       allow_google_signals: false,
@@ -72,11 +71,11 @@
   var panel = document.createElement('section');
   panel.className = 'cookie-notice';
   panel.setAttribute('aria-label', 'Analytics cookie choices');
-  panel.hidden = Boolean(preference);
-  panel.innerHTML = '<div><strong>A small privacy note</strong>' +
-    '<p>With your permission, I use Google Analytics cookies to understand visits, pages viewed, and meeting-link clicks. You can decline and still use everything here. <a href="/privacy/">Privacy details</a>.</p></div>' +
-    '<div class="cookie-actions"><button type="button" data-choice="declined">Decline analytics</button>' +
-    '<button type="button" data-choice="accepted">Accept analytics</button></div>';
+  panel.hidden = true;
+  panel.innerHTML = '<div><strong>Analytics settings</strong>' +
+    '<p>I use Google Analytics cookies to understand visits, pages viewed, and meeting-link clicks. You can turn analytics off and still use everything here. <a href="/privacy/">Privacy details</a>.</p></div>' +
+    '<div class="cookie-actions"><button type="button" data-choice="declined">Turn analytics off</button>' +
+    '<button type="button" data-choice="accepted">Turn analytics on</button></div>';
   document.body.appendChild(panel);
   panel.querySelectorAll('[data-choice]').forEach(function (button) {
     button.addEventListener('click', function () { choose(button.dataset.choice); });
@@ -89,7 +88,7 @@
       panel.querySelector('button').focus();
     });
   });
-  if (preference === 'accepted') startAnalytics();
+  if (preference !== 'declined') startAnalytics();
   else {
     window['ga-disable-' + measurementId] = true;
     clearAnalyticsCookies();
