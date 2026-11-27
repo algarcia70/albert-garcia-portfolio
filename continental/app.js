@@ -276,7 +276,9 @@ byId("review").onclick = () => {
     status(`${error.message} You can edit the transcript or enter the scores by hand.`);
   }
 };
-byId("scores").oninput = updatePoints;
+byId("scores").oninput = event => {
+  if (event.target.type === "number") updatePoints();
+};
 byId("scores").onsubmit = event => {
   event.preventDefault();
   const winner = handWinner;
