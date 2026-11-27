@@ -1,0 +1,25 @@
+:root{color-scheme:light;font-family:system-ui,sans-serif;color:#152e24;background:#edf3ee;line-height:1.5;--ink:#152e24;--green:#205940;--line:#cedbd1}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+main{width:min(100% - 2rem,46rem);margin:0 auto 3rem}
+header{background:#153e2e;color:white;margin:0 0 1rem;padding:1.5rem;border-radius:0 0 1.25rem 1.25rem}
+.suits{letter-spacing:.19em;color:#d7ebd9}.suits b{color:#ffad91}
+h1{font-family:Georgia,serif;font-size:clamp(2.6rem,10vw,4rem);line-height:1.1;margin:.35rem 0}.hint,header p{margin:.2rem 0 .7rem}
+section{background:#fff;border:1px solid var(--line);border-radius:1rem;padding:clamp(1rem,4vw,1.6rem);margin-bottom:1rem}
+h2{margin:0 0 .65rem;font-size:1.4rem}label{display:block;font-weight:650}.hint{color:#465b51;font-size:.9rem}
+textarea,select,input[type=number],button{font:inherit}
+textarea,select,input[type=number]{width:100%;border:1px solid #718778;border-radius:.5rem;background:#fff;color:var(--ink);padding:.65rem}
+textarea{display:block;resize:vertical}
+button{min-height:44px;border:1px solid transparent;border-radius:.55rem;background:var(--green);color:white;padding:.55rem .85rem;font-weight:650;cursor:pointer}
+button.secondary{color:var(--green);background:#f0f6f1;border-color:#adc2b3}button:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:3px solid #ab511f;outline-offset:3px}
+#start button,#review,.actions{margin-top:.8rem}
+#scores{border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem}
+.check{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;min-height:44px}.check input{width:1.2rem;height:1.2rem}.check span{font-weight:400;color:#465b51}
+.point{display:grid;grid-template-columns:minmax(0,1fr) 6rem minmax(4rem,auto);gap:.6rem;align-items:center;margin:.45rem 0}.point label{overflow-wrap:anywhere}.point output{text-align:right;font-size:.85rem}
+.actions{display:flex;flex-wrap:wrap;gap:.5rem}
+.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:.55rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child{text-align:left}thead,tfoot{background:#edf5ef}tfoot{font-weight:bold}
+td button{min-height:40px;padding:.3rem .55rem;font-size:.88rem}
+#status:empty,#result:empty{display:none}#status{font-weight:650;margin:.6rem 0}#result{font-weight:750}

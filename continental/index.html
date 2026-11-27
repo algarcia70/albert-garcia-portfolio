@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Continental Scorecard</title>
+<link rel="stylesheet" href="style.css">
+<script defer src="app.js"></script>
+</head>
+<body>
+<main>
+<header><span class="suits" aria-hidden="true">♠ <b>♥</b> ♣ <b>♦</b></span><h1>Continental</h1><p>Eight hands. Lowest score wins.</p></header>
+<section id="setup">
+<h2>Start a match</h2>
+<form id="start">
+<label for="names">Players</label>
+<p class="hint" id="names-hint">Enter names separated by commas or new lines.</p>
+<textarea id="names" rows="3" placeholder="Ben, Al, Margie" aria-describedby="names-hint" required></textarea>
+<button>Start match</button>
+</form>
+</section>
+<section id="entry" hidden>
+<h2 id="hand" tabindex="-1"></h2>
+<label for="dictation">Say the scores</label>
+<p class="hint" id="voice-hint">Tap the microphone on your keyboard. Call the original points before doubling.</p>
+<textarea id="dictation" lang="es" rows="3" placeholder="Al ganó con doublette. Ben catorce. Margie ocho." aria-describedby="voice-hint"></textarea>
+<button id="review" class="secondary">Review spoken scores</button>
+<form id="scores">
+<label for="winner">Hand winner</label>
+<select id="winner" required></select>
+<label class="check"><input id="doublette" type="checkbox"> Doublette <span>×2 for everyone else</span></label>
+<div id="points"></div>
+<div class="actions"><button id="save">Save hand</button><button id="cancel" type="button" class="secondary" hidden>Cancel edit</button></div>
+</form>
+</section>
+<p id="status" role="status"></p>
+<section id="board" hidden>
+<h2>Scorecard</h2>
+<p id="result"></p>
+<div class="table-wrap" tabindex="0" aria-label="Scores for all eight hands"><table id="table"></table></div>
+<p class="hint">— Hand winner · XX Doublette winner</p>
+<div class="actions"><button class="secondary" id="download">Download spreadsheet (CSV)</button><button class="secondary" id="reset">New match</button></div>
+<p class="hint">This match is saved in this browser.</p>
+</section>
+</main>
+</body>
+</html>
