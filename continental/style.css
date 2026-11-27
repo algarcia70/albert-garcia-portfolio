@@ -44,3 +44,29 @@ section{box-shadow:0 5px 16px #203e2610}
 #mic-level{width:100%;height:1rem;display:block;accent-color:#327655}
 #mic-status{grid-column:1/-1;margin:0;font-size:.875rem;color:#344e40}
 @media(max-width:370px){.hero{min-height:11rem;gap:.2rem}.hero p{font-size:.9rem}.voice-panel{column-gap:.6rem}}
+.rules{border-top:.25rem solid #c69d54}
+.rules p{margin:.7rem 0}
+.melds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+.melds>div{background:#edf4ed;border:1px solid #d0dfd2;border-radius:.7rem;padding:.7rem}
+.melds p{font-size:.9rem;margin:.2rem 0 0}
+.mini-cards{display:flex;margin:0 0 .45rem;padding-left:.2rem}
+.mini-cards span{display:grid;place-items:center;width:2rem;height:2.65rem;border:1px solid #ceb995;border-radius:.25rem;background:#fff8e4;color:#17372a;font:700 .83rem Georgia,serif;box-shadow:0 2px 4px #153e2e24;transform:rotate(-7deg)}
+.mini-cards span+span{margin-left:-.24rem;transform:none}
+.mini-cards span:last-child{transform:rotate(7deg)}
+.mini-cards.red span,.mini-cards:not(.red) span:nth-child(2){color:#a53936}
+summary{cursor:pointer;color:var(--green);font-weight:700;padding:.35rem 0}
+#hand-list{columns:2;padding-left:1.45rem;margin:.35rem 0}
+#hand-list li{break-inside:avoid;margin-bottom:.2rem}
+#scores{margin:0;border-top:0;padding-top:0}
+.point{grid-template-columns:minmax(0,1fr) minmax(5.7rem,1.25fr) 2.6rem 2.45rem;gap:.45rem;padding:.3rem 0;margin:0;border-bottom:1px solid #e1e9e2}
+.point-heading{font-size:.875rem;color:#465b51;font-weight:700}
+.point-total{text-align:center;font-variant-numeric:tabular-nums}
+.point-score{min-width:0}
+.point-score output{display:block;color:#465b51;text-align:left}
+.point-score output:empty{display:none}
+.winner-check{margin:0;justify-self:center;width:1.5rem;height:1.5rem;accent-color:#15583e;cursor:pointer}
+.win-type{width:100%;font-size:.83rem;background:#efd8a3;color:#3b2a13;padding:.35rem .2rem}
+#score-error:empty{display:none}
+#voice-entry{margin-top:1rem;padding-top:.6rem;border-top:1px solid var(--line)}
+#voice-entry label{margin-top:.5rem}
+#keyboard-mic{margin-bottom:.35rem}

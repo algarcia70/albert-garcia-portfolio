@@ -10,6 +10,8 @@ const counted = (round, player) => round.points[player] * (round.doublette ? 2 :
 const validPoints = value => Number.isInteger(value) && value >= 0 && value <= maxPoints;
 let match = null;
 let editing = null;
+let handWinner = null;
+let doubleWin = false;
 try { match = JSON.parse(localStorage.getItem(storageKey)); } catch { status("This browser could not load the saved match."); }
 
 function persist(next) {
@@ -53,6 +55,27 @@ function underThousand(value) {
   return NaN;
 }
 
+function englishNumber(value) {
+  if (/^\d+$/.test(value)) return Number(value);
+  const small = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(" ");
+  const tens = "twenty thirty forty fifty sixty seventy eighty ninety".split(" ");
+  const readSmall = words => {
+    const simple = small.indexOf(words);
+    if (simple >= 0) return simple;
+    const [ten, one, extra] = words.split(" ");
+    const tenIndex = tens.indexOf(ten);
+    const oneIndex = one ? small.indexOf(one) : 0;
+    return tenIndex >= 0 && oneIndex >= 0 && oneIndex < 10 && !extra ? (tenIndex + 2) * 10 + oneIndex : NaN;
+  };
+  const words = value.replaceAll("-", " ").replace(/\band\s+/g, "");
+  const large = words.match(/^(a|one|two|three|four|five|six|seven|eight|nine) (hundred|thousand)(?: (.+))?$/);
+  if (!large) return readSmall(words);
+  const base = (large[1] === "a" ? 1 : small.indexOf(large[1])) * (large[2] === "hundred" ? 100 : 1000);
+  if (!large[3]) return base;
+  const remainder = large[2] === "hundred" ? readSmall(large[3]) : englishNumber(large[3]);
+  return remainder < (large[2] === "hundred" ? 100 : 1000) ? base + remainder : NaN;
+}
+
 function parseScores(transcript, names) {
   const roster = names.map(normalize);
   const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -68,15 +91,17 @@ function parseScores(transcript, names) {
     const player = roster.indexOf(hit[0]);
     if (points[player] !== null) throw Error(`${names[player]} was called twice.`);
     const words = spoken.slice(hit.index + hit[0].length, hits[index + 1]?.index)
-      .replace(/^[\s:,.!?;–—]+|[\s:,.!?;–—]+$/g, "").replace(/\s+y$/, "");
-    if (/^(gano|ganador|won)(?: (?:con |with )?(doublette|doblete|doble|double))?$/.test(words)) {
+      .replace(/^[\s:,.!?;–—]+|[\s:,.!?;–—]+$/g, "").replace(/\s+(?:y|and)$/, "");
+    if (/^(gano|ganador|won(?: the (?:hand|game))?)(?: (?:con |with (?:a )?)?(doublette|doblete|doble|double)| (?:a )?double win)?$/.test(words)) {
       if (winner !== null) throw Error("Call exactly one hand winner.");
       winner = player;
-      doublette = /(?:doublette|doblete|doble|double)$/.test(words);
+      doublette = /(?:doublette|doblete|doble|double(?: win)?)$/.test(words);
       points[player] = 0;
       return;
     }
-    const point = spanishNumber(words.replace(/ (puntos?|points?)$/, ""));
+    const number = words.replace(/^(?:got|scored|tuvo) /, "").replace(/ (puntos?|points?)$/, "");
+    const spanish = spanishNumber(number);
+    const point = validPoints(spanish) ? spanish : englishNumber(number);
     if (!validPoints(point)) throw Error(`Check the points for ${names[player]}.`);
     points[player] = point;
   });
@@ -93,14 +118,20 @@ function element(tag, text) {
 }
 
 function updatePoints() {
-  const winner = Number(byId("winner").value);
-  const hasWinner = byId("winner").value !== "";
   match.names.forEach((_, index) => {
     const input = byId(`point-${index}`);
-    const output = byId(`count-${index}`);
-    input.disabled = hasWinner && winner === index;
-    const points = input.valueAsNumber;
-    output.textContent = input.disabled ? "0 counted" : validPoints(points) ? `${points * (byId("doublette").checked ? 2 : 1)} counted` : "";
+    const win = byId(`win-${index}`);
+    const winnerCheck = byId(`winner-${index}`);
+    const handScore = byId(`count-${index}`);
+    const won = handWinner === index;
+    const raw = input.valueAsNumber;
+    const countedPoints = validPoints(raw) ? raw * (doubleWin ? 2 : 1) : null;
+    input.hidden = input.disabled = won;
+    win.hidden = !won;
+    winnerCheck.checked = won;
+    win.textContent = doubleWin ? "Double Win" : "Single Win";
+    win.setAttribute("aria-label", `${win.textContent}. Switch to ${doubleWin ? "Single Win" : "Double Win"}`);
+    handScore.textContent = !won && doubleWin && countedPoints !== null ? `${countedPoints} counted` : "";
   });
 }
 
@@ -152,11 +183,10 @@ function render() {
   const index = editing ?? rounds.length;
   byId("hand").textContent = `Hand ${index + 1} of 8 · ${hands[index]}`;
   byId("dictation").value = "";
-  const select = byId("winner");
-  select.replaceChildren(new Option("Choose a player", ""), ...names.map((name, player) => new Option(name, player)));
   const round = rounds[index];
-  select.value = round?.winner ?? "";
-  byId("doublette").checked = round?.doublette ?? false;
+  handWinner = round?.winner ?? null;
+  doubleWin = round?.doublette ?? false;
+  byId("score-error").textContent = "";
   byId("cancel").hidden = editing === null;
   byId("save").textContent = editing === null ? "Save hand" : "Save changes";
   byId("points").replaceChildren(...names.map((name, player) => {
@@ -175,7 +205,32 @@ function render() {
     const output = element("output");
     output.id = `count-${player}`;
     output.htmlFor = input.id;
-    row.append(label, input, output);
+    const score = element("div");
+    score.className = "point-score";
+    const win = element("button", "Single Win");
+    win.type = "button";
+    win.className = "win-type";
+    win.id = `win-${player}`;
+    win.onclick = () => {
+      doubleWin = !doubleWin;
+      updatePoints();
+    };
+    const total = element("span", totals[player]);
+    total.className = "point-total";
+    total.setAttribute("aria-label", `Match total ${totals[player]}`);
+    const winnerCheck = element("input");
+    winnerCheck.type = "checkbox";
+    winnerCheck.className = "winner-check";
+    winnerCheck.id = `winner-${player}`;
+    winnerCheck.setAttribute("aria-label", `${name} won this hand`);
+    winnerCheck.onchange = () => {
+      handWinner = winnerCheck.checked ? player : null;
+      doubleWin = false;
+      byId("score-error").textContent = "";
+      updatePoints();
+    };
+    score.append(input, win, output);
+    row.append(label, score, total, winnerCheck);
     return row;
   }));
   updatePoints();
@@ -197,23 +252,29 @@ byId("start").onsubmit = event => {
 byId("review").onclick = () => {
   try {
     const draft = parseScores(byId("dictation").value, match.names);
-    byId("winner").value = draft.winner;
-    byId("doublette").checked = draft.doublette;
+    handWinner = draft.winner;
+    doubleWin = draft.doublette;
+    byId("score-error").textContent = "";
     draft.points.forEach((points, player) => { byId(`point-${player}`).value = points; });
     updatePoints();
     status("Check the counted points, then save the hand.");
-    byId("winner").focus();
+    byId(`winner-${draft.winner}`).focus();
   } catch (error) {
-    status(`${error.message} You can also enter the scores below.`);
+    status(`${error.message} You can edit the transcript or enter the scores by hand.`);
   }
 };
 byId("scores").oninput = updatePoints;
 byId("scores").onsubmit = event => {
   event.preventDefault();
-  const winner = Number(byId("winner").value);
+  const winner = handWinner;
+  if (winner === null) {
+    byId("score-error").textContent = "Check the player who won this hand.";
+    byId("winner-0").focus();
+    return;
+  }
   const points = match.names.map((_, player) => player === winner ? 0 : byId(`point-${player}`).valueAsNumber);
   const rounds = match.rounds.slice();
-  rounds[editing ?? rounds.length] = { points, winner, doublette: byId("doublette").checked };
+  rounds[editing ?? rounds.length] = { points, winner, doublette: doubleWin };
   if (persist({ ...match, rounds })) {
     editing = null;
     status("Hand saved.");
@@ -273,7 +334,7 @@ function finishVoice(session, message) {
   clearTimeout(session.timeout);
   micLevel.value = 0;
   mic.removeAttribute("data-listening");
-  micLabel.textContent = "Tap to speak";
+  micLabel.textContent = "Site microphone";
   micStatus.textContent = message;
   dictation.readOnly = false;
   byId("review").disabled = byId("save").disabled = false;
@@ -282,7 +343,7 @@ function finishVoice(session, message) {
 function cancelVoice() {
   const session = voiceSession;
   if (!session) return;
-  finishVoice(session, "Spanish dictation");
+  finishVoice(session, "Tap the site microphone to start.");
   session.recognition.abort();
 }
 
@@ -302,9 +363,11 @@ mic.onclick = () => {
   }
 
   const recognition = new SpeechRecognition();
-  recognition.lang = "es-US";
+  recognition.lang = byId("voice-language").value || "en-US";
   recognition.interimResults = true;
-  recognition.continuous = true;
+  // Mobile WebKit can end a continuous recognition request immediately.
+  recognition.continuous = !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    && !(navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const original = dictation.value.trim();
   const session = { recognition, heard: false, retried: false };
   voiceSession = session;
@@ -364,7 +427,21 @@ mic.onclick = () => {
     finishVoice(session, "Could not start dictation. " + keyboardFallback);
   }
 };
+byId("voice-language").onchange = () => {
+  cancelVoice();
+  const spanish = byId("voice-language").value === "es-US";
+  dictation.lang = spanish ? "es" : "en";
+  dictation.placeholder = spanish ? "Al ganó. Ben catorce. Margie ocho." : "Al won. Ben got 14. Margie got 8.";
+};
+byId("keyboard-mic").onclick = () => {
+  cancelVoice();
+  dictation.focus();
+};
 if (!SpeechRecognition) micStatus.textContent = "Use keyboard dictation on this browser.";
 window.addEventListener("pagehide", cancelVoice);
+byId("voice-entry").ontoggle = () => {
+  if (!byId("voice-entry").open) cancelVoice();
+};
+byId("hand-list").replaceChildren(...hands.map(hand => element("li", hand)));
 
 render();

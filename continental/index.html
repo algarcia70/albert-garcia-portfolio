@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Continental Scorecard</title>
-<link rel="stylesheet" href="style.css?v=2">
-<script defer src="app.js?v=3"></script>
+<link rel="stylesheet" href="style.css?v=4">
+<script defer src="app.js?v=4"></script>
 </head>
 <body>
 <main>
@@ -18,6 +18,16 @@
   <div class="playing-card heart"><span>K ♥</span><b>♥</b><span>K ♥</span></div>
 </div>
 </header>
+<section class="rules" aria-labelledby="rules-title">
+<h2 id="rules-title">How to play</h2>
+<div class="melds">
+  <div><div class="mini-cards" aria-hidden="true"><span>7♠</span><span>7♥</span><span>7♣</span></div><strong>Trío</strong><p>Three cards of the same rank.</p></div>
+  <div><div class="mini-cards red" aria-hidden="true"><span>4♥</span><span>5♥</span><span>6♥</span></div><strong>Escalera</strong><p>A run of consecutive cards.</p></div>
+</div>
+<p>Play eight hands. Each hand calls for a different combination of tríos and escaleras. Build the combination shown on the scorecard.</p>
+<p>The hand winner scores zero. Everyone else records their original points. A <strong>Double Win</strong> (doublette) doubles those points. The lowest total after eight hands wins.</p>
+<details id="hand-guide"><summary>See all eight hands</summary><ol id="hand-list"></ol></details>
+</section>
 <section id="setup">
 <h2>Start a match</h2>
 <form id="start">
@@ -29,26 +39,33 @@
 </section>
 <section id="entry" hidden>
 <h2 id="hand" tabindex="-1"></h2>
+<form id="scores">
+<p class="hint" id="winner-help">Check the hand winner next to their total. Tap <strong>Single Win</strong> in their score box to switch to <strong>Double Win</strong>.</p>
+<div class="point point-heading" aria-hidden="true"><span>Player</span><span>Hand score</span><span>Total</span><span>Won</span></div>
+<div id="points"></div>
+<p id="score-error" role="status" class="hint"></p>
+<div class="actions"><button id="save">Save hand</button><button id="cancel" type="button" class="secondary" hidden>Cancel edit</button></div>
+</form>
+<details id="voice-entry">
+<summary>Enter scores by voice</summary>
+<label for="voice-language">Dictation language</label>
+<select id="voice-language"><option value="en-US">English</option><option value="es-US">Español</option></select>
 <label for="dictation">Say the scores</label>
 <p class="hint" id="voice-hint">Call the original points before doubling.</p>
 <div class="voice-panel">
   <button id="mic" type="button" aria-describedby="mic-note">
     <svg viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-3 0h6"/></svg>
-    <span id="mic-label">Tap to speak</span>
+    <span id="mic-label">Site microphone</span>
   </button>
   <div class="voice-level"><span id="level-label">Voice activity</span><meter id="mic-level" min="0" max="100" value="0" aria-labelledby="level-label"></meter></div>
-  <p id="mic-status" role="status">Spanish dictation</p>
+  <p id="mic-status" role="status">Tap the site microphone to start.</p>
 </div>
-<p id="mic-note" class="hint">Your browser may process speech online. You can also type or use keyboard dictation.</p>
-<textarea id="dictation" lang="es" rows="3" placeholder="Al ganó con doublette. Ben catorce. Margie ocho." aria-describedby="voice-hint"></textarea>
+<p id="mic-note" class="hint">Your browser may process speech online.</p>
+<button id="keyboard-mic" type="button" class="secondary">Use keyboard mic</button>
+<p class="hint" id="keyboard-help">Tap the microphone on your phone’s keyboard when it opens.</p>
+<textarea id="dictation" lang="en" rows="3" placeholder="Al won. Ben got 14. Margie got 8." aria-describedby="voice-hint"></textarea>
 <button id="review" class="secondary">Review spoken scores</button>
-<form id="scores">
-<label for="winner">Hand winner</label>
-<select id="winner" required></select>
-<label class="check"><input id="doublette" type="checkbox"> Doublette <span>×2 for everyone else</span></label>
-<div id="points"></div>
-<div class="actions"><button id="save">Save hand</button><button id="cancel" type="button" class="secondary" hidden>Cancel edit</button></div>
-</form>
+</details>
 </section>
 <p id="status" role="status"></p>
 <section id="board" hidden>
