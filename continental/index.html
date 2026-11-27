@@ -5,12 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Continental Scorecard</title>
-<link rel="stylesheet" href="style.css">
-<script defer src="app.js"></script>
+<link rel="stylesheet" href="style.css?v=2">
+<script defer src="app.js?v=2"></script>
 </head>
 <body>
 <main>
-<header><span class="suits" aria-hidden="true">♠ <b>♥</b> ♣ <b>♦</b></span><h1>Continental</h1><p>Eight hands. Lowest score wins.</p></header>
+<header class="hero">
+<div class="hero-copy"><h1>Continental</h1><p>Eight hands. Lowest score wins.</p></div>
+<div class="card-fan" aria-hidden="true">
+  <div class="playing-card spade"><span>A ♠</span><b>♠</b><span>A ♠</span></div>
+  <div class="playing-card diamond"><span>Q ♦</span><b>♦</b><span>Q ♦</span></div>
+  <div class="playing-card heart"><span>K ♥</span><b>♥</b><span>K ♥</span></div>
+</div>
+</header>
 <section id="setup">
 <h2>Start a match</h2>
 <form id="start">
@@ -23,7 +30,16 @@
 <section id="entry" hidden>
 <h2 id="hand" tabindex="-1"></h2>
 <label for="dictation">Say the scores</label>
-<p class="hint" id="voice-hint">Tap the microphone on your keyboard. Call the original points before doubling.</p>
+<p class="hint" id="voice-hint">Call the original points before doubling.</p>
+<div class="voice-panel">
+  <button id="mic" type="button" aria-describedby="mic-note">
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-3 0h6"/></svg>
+    <span id="mic-label">Tap to speak</span>
+  </button>
+  <div class="voice-level"><span id="level-label">Mic level</span><meter id="mic-level" min="0" max="100" value="0" aria-labelledby="level-label"></meter></div>
+  <p id="mic-status" role="status">Spanish dictation</p>
+</div>
+<p id="mic-note" class="hint">Your browser may process speech online. You can also type or use keyboard dictation.</p>
 <textarea id="dictation" lang="es" rows="3" placeholder="Al ganó con doublette. Ben catorce. Margie ocho." aria-describedby="voice-hint"></textarea>
 <button id="review" class="secondary">Review spoken scores</button>
 <form id="scores">

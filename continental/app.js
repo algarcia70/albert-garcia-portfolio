@@ -105,6 +105,7 @@ function updatePoints() {
 }
 
 function render() {
+  cancelVoice();
   byId("setup").hidden = Boolean(match);
   byId("board").hidden = !match;
   byId("entry").hidden = !match || (match.rounds.length === hands.length && editing === null);
@@ -255,5 +256,126 @@ byId("download").onclick = () => {
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 };
+
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const mic = byId("mic");
+const micLabel = byId("mic-label");
+const micStatus = byId("mic-status");
+const micLevel = byId("mic-level");
+const dictation = byId("dictation");
+const keyboardFallback = "You can use the microphone on your keyboard or type the scores.";
+let voiceSession = null;
+
+function finishVoice(session, message) {
+  if (voiceSession !== session) return;
+  voiceSession = null;
+  cancelAnimationFrame(session.frame);
+  clearTimeout(session.timeout);
+  session.stream?.getTracks().forEach(track => track.stop());
+  session.context?.close().catch(() => {});
+  micLevel.value = 0;
+  mic.removeAttribute("data-listening");
+  micLabel.textContent = "Tap to speak";
+  micStatus.textContent = message;
+  dictation.readOnly = false;
+  byId("review").disabled = byId("save").disabled = false;
+}
+
+async function measureVoice(session) {
+  if (!AudioContext || !navigator.mediaDevices?.getUserMedia) return;
+  try {
+    session.context = new AudioContext();
+    session.context.resume().catch(() => {});
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    if (voiceSession !== session) {
+      stream.getTracks().forEach(track => track.stop());
+      return;
+    }
+    session.stream = stream;
+    const analyser = session.context.createAnalyser();
+    session.context.createMediaStreamSource(stream).connect(analyser);
+    analyser.fftSize = 1024;
+    const samples = new Uint8Array(analyser.fftSize);
+    let level = 0;
+    function updateLevel() {
+      analyser.getByteTimeDomainData(samples);
+      let squares = 0;
+      for (const sample of samples) squares += ((sample - 128) / 128) ** 2;
+      const rms = Math.sqrt(squares / samples.length);
+      level = Math.max(level * 0.83, Math.min(100, rms * 460));
+      micLevel.value = Math.round(level);
+      session.frame = requestAnimationFrame(updateLevel);
+    }
+    updateLevel();
+  } catch {
+    if (voiceSession === session) micStatus.textContent = "Voice level unavailable. Dictation can still work.";
+  }
+}
+
+function cancelVoice() {
+  const session = voiceSession;
+  if (!session) return;
+  finishVoice(session, "Spanish dictation");
+  session.recognition.abort();
+}
+
+mic.onclick = () => {
+  if (!SpeechRecognition) {
+    micStatus.textContent = "Direct dictation is unavailable. " + keyboardFallback;
+    dictation.focus();
+    return;
+  }
+  if (voiceSession) {
+    if (voiceSession.stopping) return;
+    const session = voiceSession;
+    session.stopping = true;
+    micStatus.textContent = "Finishing dictation…";
+    try { session.recognition.stop(); } catch { cancelVoice(); }
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "es-US";
+  recognition.interimResults = true;
+  recognition.continuous = true;
+  const original = dictation.value.trim();
+  const session = { recognition, heard: false };
+  voiceSession = session;
+  dictation.readOnly = true;
+  byId("review").disabled = byId("save").disabled = true;
+  mic.setAttribute("data-listening", "");
+  micLabel.textContent = "Stop listening";
+  micStatus.textContent = "Starting microphone…";
+  recognition.onstart = () => {
+    if (voiceSession === session) micStatus.textContent = "Listening… Say each name and score.";
+  };
+  recognition.onresult = event => {
+    if (voiceSession !== session) return;
+    const spoken = Array.from(event.results, result => result[0].transcript.trim()).filter(Boolean).join(" ");
+    session.heard = Boolean(spoken);
+    dictation.value = [original, spoken].filter(Boolean).join(" ");
+  };
+  recognition.onerror = event => {
+    const message = event.error === "not-allowed" || event.error === "service-not-allowed"
+      ? "Microphone access is unavailable."
+      : event.error === "no-speech" ? "No speech detected." : "Dictation was interrupted.";
+    finishVoice(session, message + " " + keyboardFallback);
+  };
+  recognition.onend = () => finishVoice(session, session.heard ? "Transcript ready. Review the spoken scores." : "No speech detected. Tap to try again.");
+  try {
+    recognition.start();
+    session.timeout = setTimeout(() => {
+      finishVoice(session, session.heard ? "Transcript ready. Review the spoken scores." : "Dictation timed out. " + keyboardFallback);
+      recognition.abort();
+    }, 45000);
+    void measureVoice(session);
+  } catch {
+    finishVoice(session, "Could not start dictation. " + keyboardFallback);
+  }
+};
+if (!SpeechRecognition) micStatus.textContent = "Use keyboard dictation on this browser.";
+window.addEventListener("pagehide", cancelVoice);
 
 render();
