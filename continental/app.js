@@ -8,11 +8,24 @@ const normalize = value => value.normalize("NFD").replace(/\p{M}/gu, "").toLower
 const status = message => { byId("status").textContent = message; };
 const counted = (round, player) => round.points[player] * (round.doublette ? 2 : 1);
 const validPoints = value => Number.isInteger(value) && value >= 0 && value <= maxPoints;
+function playerName(value) {
+  return value.trim().replace(/^(?:and|y)\s+/i, "").replace(/(?:\.{2,}|…)$/, "").trim()
+    .replace(/\p{L}/u, first => first.toLocaleUpperCase());
+}
+
 let match = null;
 let editing = null;
 let handWinner = null;
 let doubleWin = false;
-try { match = JSON.parse(localStorage.getItem(storageKey)); } catch { status("This browser could not load the saved match."); }
+try {
+  match = JSON.parse(localStorage.getItem(storageKey));
+  if (match) {
+    const names = match.names.map(playerName);
+    if (names.every(Boolean) && new Set(names.map(normalize)).size === names.length) match.names = names;
+  }
+} catch {
+  status("This browser could not load the saved match.");
+}
 
 function persist(next) {
   try {
@@ -91,8 +104,8 @@ function parseScores(transcript, names) {
     const player = roster.indexOf(hit[0]);
     if (points[player] !== null) throw Error(`${names[player]} was called twice.`);
     const words = spoken.slice(hit.index + hit[0].length, hits[index + 1]?.index)
-      .replace(/^[\s:,.!?;–—]+|[\s:,.!?;–—]+$/g, "").replace(/\s+(?:y|and)$/, "");
-    if (/^(gano|ganador|won(?: the (?:hand|game))?)(?: (?:con |with (?:a )?)?(doublette|doblete|doble|double)| (?:a )?double win)?$/.test(words)) {
+      .replace(/[\s,]+(?:y|and)[\s,]*$/, "").replace(/^[\s:,.!?;–—]+|[\s:,.!?;–—]+$/g, "");
+    if (/^(gano|ganador|won(?: the (?:hand|game))?|one the (?:hand|game))(?: (?:con |with (?:a )?)?(doublette|doblete|doble|double)| (?:a )?double win)?$/.test(words)) {
       if (winner !== null) throw Error("Call exactly one hand winner.");
       winner = player;
       doublette = /(?:doublette|doblete|doble|double(?: win)?)$/.test(words);
@@ -238,7 +251,7 @@ function render() {
 
 byId("start").onsubmit = event => {
   event.preventDefault();
-  const names = byId("names").value.split(/[,\n]+/).map(name => name.trim()).filter(Boolean);
+  const names = byId("names").value.split(/[,\n]+/).map(playerName).filter(Boolean);
   if (names.length < 2 || new Set(names.map(normalize)).size !== names.length) {
     status("Enter at least two distinct player names.");
     return;
